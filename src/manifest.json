@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Salesforce Org Banner",
   "version": "1.0",
-  "description": "A Chrome extension that adds a customizable banner with a label to the top of Salesforce pages, enhancing navigation and organization.",
+  "description": "Adds a customizable banner with a label to the top of Salesforce pages, enhancing navigation and organization.",
   "author": "Tim Paulaskas",
   "permissions": ["activeTab", "scripting", "storage"],
   "host_permissions": [
