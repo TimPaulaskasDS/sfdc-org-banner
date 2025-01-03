@@ -24,10 +24,18 @@ chrome.tabs.onActivated.addListener(activeInfo => {
     chrome.tabs.get(activeInfo.tabId, tab => {
         if (tab.url && isSalesforceDomain(tab.url)) {
             chrome.action.enable(activeInfo.tabId);
-            chrome.action.setIcon({ tabId: activeInfo.tabId, path: 'assets/icon-32.png' });
+            chrome.action.setIcon({ tabId: activeInfo.tabId, path: 'assets/icon-32.png' }, () => {
+                if (chrome.runtime.lastError) {
+                    console.error(`Failed to set icon: ${chrome.runtime.lastError.message}`);
+                }
+            });
         } else {
             chrome.action.disable(activeInfo.tabId);
-            chrome.action.setIcon({ tabId: activeInfo.tabId, path: 'assets/icon-disabled-32.png' });
+            chrome.action.setIcon({ tabId: activeInfo.tabId, path: 'assets/icon-disabled-32.png' }, () => {
+                if (chrome.runtime.lastError) {
+                    console.error(`Failed to set icon: ${chrome.runtime.lastError.message}`);
+                }
+            });
         }
     });
 });
@@ -36,10 +44,18 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (changeInfo.status === 'complete') {
         if (tab.url && isSalesforceDomain(tab.url)) {
             chrome.action.enable(tabId);
-            chrome.action.setIcon({ tabId: tabId, path: 'assets/icon-32.png' });
+            chrome.action.setIcon({ tabId: tabId, path: 'assets/icon-32.png' }, () => {
+                if (chrome.runtime.lastError) {
+                    console.error(`Failed to set icon: ${chrome.runtime.lastError.message}`);
+                }
+            });
         } else {
             chrome.action.disable(tabId);
-            chrome.action.setIcon({ tabId: tabId, path: 'assets/icon-disabled-32.png' });
+            chrome.action.setIcon({ tabId: tabId, path: 'assets/icon-disabled-32.png' }, () => {
+                if (chrome.runtime.lastError) {
+                    console.error(`Failed to set icon: ${chrome.runtime.lastError.message}`);
+                }
+            });
         }
     }
 });
