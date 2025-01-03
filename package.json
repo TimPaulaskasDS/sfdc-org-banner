@@ -1,0 +1,38 @@
+{
+  "name": "sfdc-org-banner",
+  "version": "1.0.0",
+  "description": "A Chrome extension for SFDC Org Banner",
+  "main": "src/background.js",
+  "scripts": {
+    "test": "vitest",
+    "lint": "eslint .",
+    "build": "echo 'Build step can be added here'"
+  },
+  "keywords": [
+    "chrome",
+    "extension",
+    "sfdc",
+    "salesforce"
+  ],
+  "author": "Tim Paulaskas",
+  "license": "MIT",
+  "dependencies": {
+    "node-fetch": "^2.6.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.15.0",
+    "@babel/plugin-transform-modules-commonjs": "^7.15.0",
+    "@babel/preset-env": "^7.15.0",
+    "eslint": "^9.17.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-jsx-a11y": "^6.4.1",
+    "eslint-plugin-prettier": "^3.4.0",
+    "prettier": "^2.4.1",
+    "vitest": "^2.1.8"
+  },
+  "browser": {
+    "src/background.js": "background.js",
+    "src/content.js": "content.js"
+  }
+}
