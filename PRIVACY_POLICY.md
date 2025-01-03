@@ -1,6 +1,6 @@
 # Privacy Policy for Salesforce Org Banner
 
-**Effective Date:** [Insert Date]
+**Effective Date:** 2025-01-03
 
 ## Introduction
 
@@ -39,4 +39,4 @@ We may update this Privacy Policy from time to time. Any changes will be posted 
 ## Contact Us
 
 If you have any questions about this Privacy Policy, please contact us at:  
-**Email:** [Insert Your Email]
+**Email:** [tim.paulaskas@gmail.com]
