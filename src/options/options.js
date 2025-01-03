@@ -229,7 +229,7 @@ document.addEventListener('DOMContentLoaded', function () {
     updateBanner();
 
     function updateBanner() {
-      createBanner(labelInput.value || 'PRODUCTION', bgColorText.value || 'red', textColorText.value || 'white');
+      createBanner(labelInput.value || 'Label', bgColorText.value || 'red', textColorText.value || 'white');
     }
   }
 
