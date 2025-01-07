@@ -83,7 +83,7 @@ function createBanner(text, bgColor = 'red', textColor = 'white') {
 
     // Define the banner styles
     const bannerStyles = {
-        position: "relative", // Ensure the close button is positioned correctly
+        position: window.location.hostname === "login.salesforce.com" ? "absolute" : "relative", // Ensure the close button is positioned correctly
         display: "block", // Makes it span the full width
         width: "100%", // Full-width banner
         padding: "0.5rem 2rem", // Padding for spacing

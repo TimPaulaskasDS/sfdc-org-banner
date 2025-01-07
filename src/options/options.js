@@ -152,7 +152,6 @@ document.addEventListener('DOMContentLoaded', function () {
     function validateSubdomain(entry) {
       const subdomainInput = entry.querySelector('.subdomain');
       let subdomain = subdomainInput.value;
-      console.log(subdomain);
 
       // Check if the subdomain contains a single '-'
       if (subdomain.split('-').length === 2) {
