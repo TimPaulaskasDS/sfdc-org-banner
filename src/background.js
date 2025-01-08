@@ -53,7 +53,7 @@ chrome.tabs.onActivated.addListener(activeInfo => {
                 }
                 chrome.action.setIcon({ tabId: activeInfo.tabId, path: 'assets/icon-disabled-32.png' }, () => {
                     if (chrome.runtime.lastError) {
-                        console.error(`Failed to set icon: ${chrome.runtime.lastError.message}`);
+                        console.warn(`Failed to set icon: ${chrome.runtime.lastError.message}`);
                     }
                 });
             });
@@ -76,7 +76,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
                 }
                 chrome.action.setIcon({ tabId: tabId, path: 'assets/icon-32.png' }, () => {
                     if (chrome.runtime.lastError) {
-                        console.error(`Failed to set icon: ${chrome.runtime.lastError.message}`);
+                        console.warn(`Failed to set icon: ${chrome.runtime.lastError.message}`);
                     }
                 });
             });
@@ -93,7 +93,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
                 }
                 chrome.action.setIcon({ tabId: tabId, path: 'assets/icon-disabled-32.png' }, () => {
                     if (chrome.runtime.lastError) {
-                        console.error(`Failed to set icon: ${chrome.runtime.lastError.message}`);
+                        console.warn(`Failed to set icon: ${chrome.runtime.lastError.message}`);
                     }
                 });
             });
@@ -104,3 +104,14 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 function isSalesforceDomain(url) {
     return salesforceDomains.some(domain => url.toLowerCase().includes(domain.toLowerCase()));
 }
+
+chrome.runtime.onInstalled.addListener((details) => {
+    if (details.reason === "update") {
+        const currentVersion = chrome.runtime.getManifest().version;
+
+        // Open the release notes page
+        chrome.tabs.create({
+            url: `release_notes.html`
+        });
+    }
+});

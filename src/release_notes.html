@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What's New</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            height: 100vh;
+            background-color: #f4f4f4;
+            font-size: 16px;
+            /* Adjust the base font size */
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1000px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-top: 60px;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #007bff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        h1 img {
+            margin-right: 10px;
+        }
+
+        ul {
+            line-height: 1.6;
+            font-size: 16px;
+            /* Adjust the font size for list items */
+        }
+
+        p {
+            font-size: 16px;
+            /* Adjust the font size for paragraphs */
+        }
+
+        .button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            display: block;
+            width: 100%;
+            max-width: 200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1><img src="assets/icon-32.png" alt="Extension Icon">What's New</h1>
+        <div id="release-notes">
+            <h2>Version 1.2</h2>
+            <ul>
+                <li>Feature: Added functionality to create and manage tabs in the options page.</li>
+                <li>Feature: Implemented drag-and-drop functionality for tabs and table entries in the options page.
+                </li>
+                <li>Feature: Added the ability to import/export entries to/from JSON.</li>
+                <li>Feature: Added the ability to move entries from one tab to another.</li>
+                <li>Feature: Added the ability to rearrange tabs.</li>
+                <li>Feature: Added the ability to scroll through tabs.</li>
+                <li>Fix: Duplicate check is now case insensitive.</li>
+            </ul>
+            <h2>Version 1.1</h2>
+            <ul>
+                <li>Fix: Addressed issues reported by users.</li>
+                <li>Fix: Fixed banner rendering issues.</li>
+            </ul>
+            <h2>Version 1.0</h2>
+            <ul>
+                <li>Initial release with basic features.</li>
+            </ul>
+        </div>
+        <p>Thank you for using our extension!</p>
+    </div>
+</body>
+
+</html>

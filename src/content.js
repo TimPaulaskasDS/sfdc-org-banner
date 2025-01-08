@@ -29,13 +29,63 @@ const lowerCaseDomains = domains.map(domain => domain.toLowerCase());
 
 // Function to get the first subdomain
 const getFirstSubdomain = (url) => {
-    const hostname = new URL(url).hostname;
-    const parts = hostname.split('.');
-    return parts.length > 2 ? parts[0] : null;
+    try {
+        const hostname = new URL(url).hostname;
+        const parts = hostname.split('.');
+        return parts.length > 2 ? parts[0] : null;
+    } catch (error) {
+        console.error('Invalid URL:', url);
+        return null;
+    }
 };
 
-// Wait for the entire page to be fully loaded
-window.onload = () => {
+// Function to check if a domain is in the list
+const isDomainInList = (url) => {
+    try {
+        const hostname = new URL(url).hostname.toLowerCase();
+        return lowerCaseDomains.includes(hostname);
+    } catch (error) {
+        console.error('Invalid URL:', url);
+        return false;
+    }
+};
+
+const observer = new MutationObserver((mutationsList, observer) => {
+    for (const mutation of mutationsList) {
+        if (mutation.type === 'childList') {
+            // Locate the "Logged in as" bar
+            const sfdcBanner = document.querySelector(
+                ".slds-color__background_gray-1.slds-text-align_center.slds-size_full.slds-text-body_regular.oneSystemMessage"
+            );
+
+            // Locate the global header
+            const globalHeader = document.querySelector(
+                ".slds-global-header.slds-grid.slds-grid_align-spread"
+            );
+
+            // Clear the previous timeout if there is one
+            clearTimeout(mutationTimeout);
+
+            // Set a new timeout to check if mutations have stopped
+            mutationTimeout = setTimeout(() => {
+                initializeBanner();
+                observer.disconnect(); // Stop observing once the elements are found
+            }, 1500); // Adjust the timeout duration as needed
+
+            if (sfdcBanner || globalHeader) {
+                observer.disconnect(); // Stop observing once the elements are found
+                break;
+            }
+        }
+    }
+});
+
+// Assuming you want to observe the body for changes
+const targetNode = document.body;
+const config = { childList: true, subtree: true };
+
+// Function to check if the domain is a Salesforce domain
+function initializeBanner() {
     const currentUrl = window.location.href;
 
     // Get the current URL
@@ -53,7 +103,7 @@ window.onload = () => {
                 const currentSubdomain = urlParts[0];
 
                 // Check if the current hostname starts with the subdomain
-                if (currentSubdomain === subdomain) {
+                if (currentSubdomain === subdomain.toLowerCase()) {
                     // Extract the remaining domain part
                     const remainingDomain = `.${urlParts.slice(1).join('.')}`;
 
@@ -63,39 +113,40 @@ window.onload = () => {
                     );
 
                     if (matchedDomain) {
-                        console.log(`Salesforce Org Banner:`);
-                        console.log(`Found matching subdomain: [${currentSubdomain}]`);
-                        console.log(`Found matching domain: [${matchedDomain}]`);
-
-                        setTimeout(() => {
-                            createBanner(entry.label, entry.bgColor, entry.textColor);
-                        }, 1000);
+                        const existingBanner = document.querySelector(".slds-notify_alert.slds-notify--alert.oneSystemMessage.banner");
+                        if (existingBanner) {
+                            existingBanner.remove();
+                        }
+                        console.log(`Salesforce Org Banner:\nFound matching subdomain: [${currentSubdomain}]\nFound matching domain: [${matchedDomain}]`);
+                        createBanner(entry.label, entry.bgColor, entry.textColor);
+                        changeFaviconColor(entry.bgColor);
                     }
                 }
             });
         }
     });
-};
+}
+
+function applyBannerStyles(banner, textColor, bgColor) {
+    const currentUrl = window.location.href;
+    const isLoginSalesforce = new URL(currentUrl).hostname === "login.salesforce.com";
+
+    Object.assign(banner.style, {
+        position: isLoginSalesforce ? "absolute" : "relative",
+        display: "block",
+        width: "100%",
+        padding: "0.5rem 2rem",
+        color: textColor,
+        fontWeight: "bold",
+        textAlign: "center",
+        backgroundColor: bgColor,
+        backgroundImage: `linear-gradient(45deg, rgba(255, 255, 255, 0.1) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.1) 75%, transparent 75%, transparent)`,
+        backgroundSize: "64px 64px",
+        boxSizing: "border-box"
+    });
+}
 
 function createBanner(text, bgColor = 'red', textColor = 'white') {
-    // Determine the gradient color based on the background color
-    const gradientColor = getContrastColor(bgColor);
-
-    // Define the banner styles
-    const bannerStyles = {
-        position: window.location.hostname === "login.salesforce.com" ? "absolute" : "relative", // Ensure the close button is positioned correctly
-        display: "block", // Makes it span the full width
-        width: "100%", // Full-width banner
-        padding: "0.5rem 2rem", // Padding for spacing
-        color: "white", // Text color
-        fontWeight: "bold", // Bold text
-        textAlign: "center", // Center text alignment
-        backgroundColor: bgColor, // Background color
-        backgroundImage: `linear-gradient(45deg, ${gradientColor} 25%, transparent 25%, transparent 50%, ${gradientColor} 50%, ${gradientColor} 75%, transparent 75%, transparent)`,
-        backgroundSize: "64px 64px", // Matches Salesforce's style
-        boxSizing: "border-box", // Include padding in width calculations
-    };
-
     // Locate the existing banner
     const existingBanner = document.querySelector(
         ".slds-notify_alert.system-message.level-info.slds-theme_info[data-message-id='loginAsSystemMessage']"
@@ -103,20 +154,25 @@ function createBanner(text, bgColor = 'red', textColor = 'white') {
 
     if (existingBanner) {
         // Apply the styles to the existing banner
-        Object.assign(existingBanner.style, bannerStyles);
+        applyBannerStyles(existingBanner, textColor, bgColor);
+        // Apply text color to any hyperlinks within the banner
+        const links = existingBanner.querySelectorAll('a');
+        links.forEach(link => {
+            link.style.color = textColor;
+        });
     } else {
         // Create a new banner element
         const banner = document.createElement("div");
         banner.className = "slds-notify_alert slds-notify--alert oneSystemMessage banner";
 
         // Apply the styles to the new banner
-        Object.assign(banner.style, bannerStyles);
+        applyBannerStyles(banner, textColor, bgColor);
 
         // Add content to the banner
         banner.textContent = text;
 
         // Locate the "Logged in as" bar
-        const loggedInAsBar = document.querySelector(
+        const sfdcBanner = document.querySelector(
             ".slds-color__background_gray-1.slds-text-align_center.slds-size_full.slds-text-body_regular.oneSystemMessage"
         );
 
@@ -125,19 +181,49 @@ function createBanner(text, bgColor = 'red', textColor = 'white') {
             ".slds-global-header.slds-grid.slds-grid_align-spread"
         );
 
-        if (loggedInAsBar) {
-            // Add the banner before the "Logged in as" bar
-            loggedInAsBar.parentNode.insertBefore(banner, loggedInAsBar);
+        if (sfdcBanner) {
+            setTimeout(() => {
+                const oneSystemMessage = document.querySelector(".oneSystemMessage");
+                const bannerBar = oneSystemMessage?.firstElementChild;
+
+                if (bannerBar) {
+                    // Apply the styles to the existing banner
+                    applyBannerStyles(bannerBar, textColor, bgColor);
+                    // Apply text color to any hyperlinks within the banner
+                    const links = bannerBar.querySelectorAll('a');
+                    links.forEach(link => {
+                        link.style.color = textColor;
+                    });
+                } else {
+                    const sfdcBanner = document.querySelector(
+                        ".slds-color__background_gray-1.slds-text-align_center.slds-size_full.slds-text-body_regular.oneSystemMessage"
+                    );
+                    const banner = document.createElement("div");
+                    banner.className = "slds-notify_alert slds-notify--alert oneSystemMessage banner";
+
+                    // Apply the styles to the new banner
+                    applyBannerStyles(banner, textColor, bgColor);
+
+                    // Add content to the banner
+                    banner.textContent = text;
+                    sfdcBanner.parentNode.insertBefore(banner, sfdcBanner);
+                    addDimissButton()
+                }
+            }, 1000); // Wait 1 second
         } else if (globalHeader) {
             // Add the banner before the global header
             globalHeader.parentNode.insertBefore(banner, globalHeader);
         } else {
             // Insert the banner immediately after the <body> tag
             document.body.insertAdjacentElement("afterbegin", banner);
-            banner.style.zIndex = "1000"; // Set z-index only if loggedInAsBar and globalHeader are not found
+            banner.style.zIndex = "1000"; // Set z-index only if sfdcBanner and globalHeader are not found
         }
     }
 
+    addDimissButton()
+}
+
+function addDimissButton() {
     // Ensure the banner element is selected correctly
     const bannerElement = document.querySelector(".slds-notify_alert.oneSystemMessage.banner");
 
@@ -171,13 +257,34 @@ function createBanner(text, bgColor = 'red', textColor = 'white') {
     }
 }
 
-// Helper function to determine the contrast color
-function getContrastColor(bgColor) {
-    const hex = bgColor.replace('#', '');
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
-    const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-    const transparency = 0.1; // Fixed transparency value
-    return (yiq >= 128) ? `rgba(0, 0, 0, ${transparency})` : `rgba(255, 255, 255, ${transparency})`;
+function changeFaviconColor(color) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 16;
+    canvas.height = 16;
+
+    const context = canvas.getContext('2d');
+    const img = new Image();
+    const oldLink = document.querySelector('link[rel="icon"]');
+    img.src = oldLink ? oldLink.href : '/favicon.ico'; // Fallback to default favicon if not found
+
+    img.onload = () => {
+        context.drawImage(img, 0, 0, 16, 16);
+        context.globalCompositeOperation = 'source-atop';
+        context.fillStyle = color;
+        context.fillRect(0, 0, 16, 16);
+
+        const link = document.createElement('link');
+        link.rel = 'icon';
+        link.href = canvas.toDataURL('image/png');
+
+        if (oldLink) {
+            document.head.removeChild(oldLink);
+        }
+        document.head.appendChild(link);
+    };
 }
+
+let mutationTimeout; // Used to check if mutations have stopped
+
+// Start observing
+observer.observe(targetNode, config);

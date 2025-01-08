@@ -11,20 +11,25 @@
 
 <body>
     <div id="app" class="popup-container">
-        <h1>Salesforce Org Banner</h1>
+        <h1>Salesforce Org Banner
+            <button id="optionsButton" class="icon-button"><i class="fas fa-cog"></i></button>
+            <div id="optionsMenu" class="options-menu hidden">
+                <button id="importOption" class="menu-item">Import</button>
+                <button id="exportOption" class="menu-item">Export</button>
+            </div>
+        </h1>
         <div id="banner-placeholder"></div> <!-- Placeholder for the banner -->
-        <table id="entries-table">
-            <thead>
-                <tr>
-                    <th>Subdomain*</th>
-                    <th>Label</th>
-                    <th>Background Color*</th>
-                    <th>Text Color*</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="entries"></tbody>
-        </table>
+        <div class="tab-scroll-container">
+            <button class="scroll-button left"><i class="fas fa-angle-double-left"></i></button>
+            <div class="tab-wrapper">
+                <div class="tab">
+                    <button id="newTab" class="tablinks">+</button>
+                </div>
+            </div>
+            <button class="scroll-button right"><i class="fas fa-angle-double-right"></i></button>
+        </div>
+        <div class="tabcontent">
+        </div>
         <button id="addEntryButton" class="button">Add Entry</button>
     </div>
     <script src="options.js"></script>

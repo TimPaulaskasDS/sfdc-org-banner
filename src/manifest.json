@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Salesforce Org Banner",
-  "version": "1.1",
+  "version": "1.2",
   "description": "Adds a customizable banner with a label to the top of Salesforce pages, enhancing navigation and organization.",
   "author": "Tim Paulaskas",
   "permissions": ["activeTab", "storage"],

@@ -126,6 +126,8 @@ input[type='color'] {
 
 .invalidIcon {
   color: #dc3545; /* Red color for invalid icon */
+  background-color: #fff;
+  border-radius: 50%; /* Make it a circle */
   margin-left: 5px;
   cursor: pointer;
   position: relative;
@@ -134,7 +136,7 @@ input[type='color'] {
 }
 
 .invalidIcon::after {
-  content: 'Duplicate subdomain. Entry will not be saved.';
+  content: 'Duplicate value. Entry will not be saved.';
   position: absolute;
   background-color: #333;
   color: #fff;
@@ -186,4 +188,243 @@ input[type='color'] {
 .warningIcon:hover::after {
   opacity: 1;
   visibility: visible;
+}
+
+.drag-handle {
+  cursor: grab;
+  text-align: center;
+  color: darkgrey;
+}
+.dragging .drag-handle {
+  cursor: grabbing;
+}
+
+/* Style the tab */
+.tab {
+  overflow: hidden;
+  overflow-x: auto; /* Enable horizontal scrolling */
+  white-space: nowrap; /* Prevent wrapping */
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+  display: flex;
+  align-items: center;
+  width: 100%; /* Ensure the tab takes the full width of the wrapper */
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.tab::-webkit-scrollbar {
+  display: none;
+}
+
+/* Style the buttons inside the tab */
+.tab button {
+  background-color: white; /* Ensure background color is set */
+  color: #007bff; /* Ensure text color is set */
+  border: none;
+  outline: none;
+  cursor: grab;
+  padding: 14px 16px;
+  transition: 0.3s;
+  font-size: 17px;
+  border-top-left-radius: 10px; /* Added rounded top left corner */
+  border-top-right-radius: 10px; /* Added rounded top right corner */
+  position: relative; /* Added to position the pencil icon */
+  display: inline-block; /* Ensure buttons are inline for horizontal scrolling */
+  flex: 0 0 auto; /* Prevent shrinking */
+  width: 150px; /* Set a fixed width for each tab */
+  margin-top: 15px; /* Added 15px top margin */
+}
+
+.tab button:first-child {
+  margin-left: 0; /* Remove margin for the first tab */
+}
+
+.tab button.dragging {
+  cursor: grabbing;
+  opacity: 0.5;
+}
+
+.tab button .edit-input {
+  display: none; /* Initially hidden */
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  transform: translateY(-50%);
+  width: calc(100% - 40px); /* Adjust width to fit within the button */
+  border: none;
+  outline: none;
+  font-size: 17px;
+  background: transparent;
+  color: inherit;
+}
+
+/* Change background color of buttons on hover */
+.tab button:hover {
+  background-color: #007bff; /* Hover background color */
+  color: white; /* Hover text color */
+  opacity: 0.5;
+}
+
+/* Create an active/current tablink class */
+.tab button.active {
+  background-color: #007bff; /* Active tab background color */
+  color: white; /* Active tab text color */
+}
+
+/* Change background color of active buttons on hover */
+.tab button.active:hover {
+  background-color: #007bff; /* Hover background color for active tab */
+  color: white; /* Hover text color for active tab */
+  opacity: 1;
+}
+
+/* Style the tab content */
+.tabcontent {
+  border-top: none;
+}
+
+.tab-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 17px;
+  color: inherit;
+  width: calc(100% - 40px); /* Adjust width to fit within the button */
+  box-sizing: border-box;
+}
+
+.tab-input:focus {
+  background: transparent;
+  border: none;
+  outline: none;
+}
+
+.tab-scroll-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0; /* Remove the margin to eliminate the gap */
+}
+
+.tab-wrapper {
+  overflow: hidden;
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  max-width: calc(
+    100% - 80px
+  ); /* Adjust width to fit between the scroll buttons */
+}
+
+.tab-wrapper .tablinks .fas.fa-grip-lines-vertical {
+  visibility: hidden;
+}
+
+.tab-wrapper .tablinks:hover .fas.fa-grip-lines-vertical {
+  visibility: visible;
+}
+
+.scroll-button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #007bff;
+  background-color: white;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+  font-size: 18px;
+  z-index: 1;
+  opacity: 0.5;
+}
+
+.scroll-button.left {
+  left: 0;
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+
+.scroll-button.right {
+  right: 0;
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+
+.scroll-button:hover {
+  background-color: #007bff;
+  color: white;
+  opacity: 1;
+}
+
+#newTab {
+  width: 40px; /* Set a smaller width for the newTab button */
+  padding: 14px 0; /* Adjust padding to center the + */
+}
+
+#newTab:hover {
+  background-color: #007bff; /* Hover background color */
+  color: white; /* Hover text color */
+  opacity: 1;
+}
+
+.tab-name-container {
+  display: flex;
+  align-items: center;
+}
+
+.tab-name {
+  white-space: nowrap; /* Prevent line breaks */
+  overflow: hidden; /* Hide overflow content */
+  text-overflow: ellipsis; /* Add ellipsis for overflow content */
+  display: inline-block; /* Ensure inline-block for auto-sizing */
+  width: auto; /* Auto-size based on content */
+}
+
+.icon-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 24px;
+  color: #007bff;
+  padding: 0;
+  margin-left: 10px;
+}
+
+.options-menu {
+  position: absolute;
+  top: 40px;
+  right: 10px;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  width: auto; /* Ensure the width is auto */
+  min-width: 150px; /* Set a minimum width */
+  max-width: 200px; /* Set a maximum width */
+  padding: 10px; /* Add padding for better appearance */
+}
+
+.options-menu .menu-item {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
+  display: block;
+  width: 100%;
+  max-width: 200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.options-menu .menu-item:hover {
+  background-color: #0056b3;
+}
+
+.hidden {
+  display: none;
 }
