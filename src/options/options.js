@@ -176,7 +176,7 @@ const TableManager = {
     entry.setAttribute('draggable', 'true');
     const usedColors = Array.from(document.querySelectorAll('.entry .bg-color-text')).map(input => input.value);
     const availableColors = boldColors.filter(color => !usedColors.includes(color));
-    const bgColor = availableColors.length > 0 ? availableColors[0] : 'DodgerBlue';
+    const bgColor = entryData.bgColor || (availableColors.length > 0 ? availableColors[0] : 'DodgerBlue');
     const bgColorHex = convertToHex(entryData.bgColor || bgColor);
     const textColor = suggestTextColor(bgColorHex);
 
@@ -187,7 +187,7 @@ const TableManager = {
       <td>
         <div class="color-input">
           <input type="text" placeholder="Background Color" class="bg-color-text" value="${bgColor}">
-          <input type="color" class="bg-color-picker" value="${convertToHex(bgColorHex)}">
+          <input type="color" class="bg-color-picker" value="${convertToHex(bgColor)}">
         </div>
       </td>
       <td>
@@ -198,11 +198,20 @@ const TableManager = {
       </td>
       <td><button class="remove-button"><i class="fas fa-trash-alt"></i></button></td>
     `;
-    const unsavedRows = tableBody.querySelectorAll('.entry.unsaved');
-    if (unsavedRows.length > 0) {
-      tableBody.insertBefore(entry, unsavedRows[0]);
+    if (Object.keys(entryData).length === 0) {
+      const unsavedRows = tableBody.querySelectorAll('.entry.unsaved');
+      if (unsavedRows.length > 0) {
+        tableBody.appendChild(entry);
+      } else {
+        tableBody.appendChild(entry);
+      }
     } else {
-      tableBody.appendChild(entry);
+      const unsavedRows = tableBody.querySelectorAll('.entry.unsaved');
+      if (unsavedRows.length > 0) {
+        tableBody.insertBefore(entry, unsavedRows[0]);
+      } else {
+        tableBody.appendChild(entry);
+      }
     }
 
     const bgColorText = entry.querySelector('.bg-color-text');
@@ -391,7 +400,6 @@ const TableManager = {
           existingIcon.remove();
         }
       }
-      saveIfComplete();
     }
 
     function isValidColor(color) {
