@@ -4,15 +4,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Redirecting...</title>
+    <title>Salesforce Org Banner</title>
     <link rel="stylesheet" href="popup.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <script src="popup.js"></script>
 </head>
 
 <body>
-    <div class="popup-container">
-        <h1>Popup Menu</h1>
-        <button id="openOptions" class="button">Open Options</button>
+    <div id="app" class="popup-container">
+        <div class="top-row">
+            <img src="../assets/icon-32.png" alt="Extension Icon" class="extension-icon">
+            <input type="text" id="searchBox" placeholder="Search...">
+            <button id="optionsButton" class="icon-button"><i class="fas fa-sliders-h"></i></button>
+        </div>
+        <div class="content-row">
+            <div class="tab-list" id="tabList"></div>
+            <div class="tabcontent" id="tabContent"></div>
+        </div>
     </div>
 </body>
 

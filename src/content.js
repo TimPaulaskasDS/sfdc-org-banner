@@ -218,6 +218,13 @@ function createBanner(text, bgColor = 'red', textColor = 'white') {
             document.body.insertAdjacentElement("afterbegin", banner);
             banner.style.zIndex = "1000"; // Set z-index only if sfdcBanner and globalHeader are not found
         }
+        // Log the top left coordinates of the banner
+        const rect = banner.getBoundingClientRect();
+
+        // If the top coordinate is greater than 100, change the banner position to absolute
+        if (rect.top > 100) {
+            banner.style.position = 'absolute';
+        }
     }
 
     addDimissButton()
