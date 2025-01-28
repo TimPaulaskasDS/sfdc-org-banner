@@ -4,7 +4,7 @@
   "version": "1.3",
   "description": "Adds a customizable banner with a label to the top of Salesforce pages, enhancing navigation and organization.",
   "author": "Tim Paulaskas",
-  "permissions": ["activeTab", "storage"],
+  "permissions": ["storage"],
   "host_permissions": [
     "https://*.bluetail.salesforce.com/",
     "https://*.force.com/",
