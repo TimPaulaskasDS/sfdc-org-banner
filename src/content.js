@@ -34,7 +34,6 @@ const getFirstSubdomain = (url) => {
         const parts = hostname.split('.');
         return parts.length > 2 ? parts[0] : null;
     } catch (error) {
-        console.error('Invalid URL:', url);
         return null;
     }
 };
@@ -45,7 +44,6 @@ const isDomainInList = (url) => {
         const hostname = new URL(url).hostname.toLowerCase();
         return lowerCaseDomains.includes(hostname);
     } catch (error) {
-        console.error('Invalid URL:', url);
         return false;
     }
 };

@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
         table.innerHTML = `
             <tbody>
                 ${entries.map(entry => `
-                    <tr class="entry-row" data-subdomain="${entry.subdomain}">
+                    <tr class="entry-row" data-subdomain="${entry.subdomain}" data-tabname="${entry.tabname}">
                         <td style="background-color: ${entry.bgColor}; color: ${entry.textColor}; cursor: pointer;">
                             ${entry.label}
                         </td>
@@ -70,12 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.querySelectorAll('.entry-row').forEach(row => {
             row.addEventListener('click', () => {
-                const subdomain = row.getAttribute('data-subdomain');
-                if (subdomain.includes('--')) {
-                    window.open(`https://${subdomain}.sandbox.my.salesforce.com`, '_blank');
-                } else {
-                    window.open(`https://${subdomain}.my.salesforce.com`, '_blank');
-                }
+                openSalesforceTab(row);
             });
         });
     }
@@ -84,5 +79,31 @@ document.addEventListener('DOMContentLoaded', () => {
         const allButtons = tabList.querySelectorAll('button');
         allButtons.forEach(btn => btn.classList.remove('active'));
         button.classList.add('active');
+    }
+
+    function openSalesforceTab(row) {
+        const subdomain = row.getAttribute('data-subdomain');
+        const tabname = row.getAttribute('data-tabname');
+        const url = subdomain.includes('--')
+            ? `https://${subdomain}.sandbox.my.salesforce.com`
+            : `https://${subdomain}.my.salesforce.com`;
+
+        chrome.storage.local.get('useTabGroups', (result) => {
+            const useTabGroups = result.useTabGroups || false;
+
+            if (useTabGroups) {
+                chrome.runtime.sendMessage({
+                    action: "createTabGroup",
+                    tabGroupName: tabname,
+                    url: url
+                }, (response) => {
+                    if (response && response.status === "success") {
+                    } else {
+                    }
+                });
+            } else {
+                window.open(url, '_blank');
+            }
+        });
     }
 });

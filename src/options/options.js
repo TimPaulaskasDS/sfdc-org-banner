@@ -468,8 +468,6 @@ const TableManager = {
       const bannerPlaceholder = document.getElementById('banner-placeholder');
       if (bannerPlaceholder) {
         bannerPlaceholder.appendChild(banner);
-      } else {
-        console.error('Banner placeholder element not found');
       }
 
       // Helper function to determine the contrast color
@@ -798,6 +796,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
   const optionsButton = document.getElementById('optionsButton');
   const optionsMenu = document.getElementById('optionsMenu');
+  const useTabGroupsToggle = document.getElementById('useTabGroupsToggle');
+  const tabGroupsOption = document.getElementById('tabGroupsOption');
+
+  // Load the current value from Chrome storage and set the toggle state
+  chrome.storage.local.get('useTabGroups', (result) => {
+    useTabGroupsToggle.checked = result.useTabGroups || false;
+  });
+
+  // Update Chrome storage when the toggle is changed
+  useTabGroupsToggle.addEventListener('change', () => {
+    chrome.storage.local.set({ useTabGroups: useTabGroupsToggle.checked });
+  });
+
+  // Toggle the useTabGroupsToggle input value when tabGroupsOption button is clicked
+  tabGroupsOption.addEventListener('click', () => {
+    useTabGroupsToggle.checked = !useTabGroupsToggle.checked;
+    chrome.storage.local.set({ useTabGroups: useTabGroupsToggle.checked });
+  });
 
   optionsButton.addEventListener('click', () => {
     optionsMenu.classList.toggle('hidden');
@@ -857,7 +873,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     TableManager.addEntry(tabGUID, entry);
                   }
                 } else {
-                  console.error('Invalid entry format:', entry);
                   invalidEntriesCount++;
                 }
 
@@ -867,11 +882,9 @@ document.addEventListener('DOMContentLoaded', function () {
               });
               TableManager.saveEntries();
             } else {
-              console.error('Invalid JSON format: Expected an array of entries.');
               alert('Invalid JSON format: Expected an array of entries.');
             }
           } catch (error) {
-            console.error('Error parsing JSON:', error);
             alert('Error parsing JSON: ' + error.message);
           }
         };
@@ -893,8 +906,6 @@ document.addEventListener('DOMContentLoaded', function () {
         a.download = 'salesforce-org-banner.json';
         a.click();
         URL.revokeObjectURL(url);
-      } else {
-        console.error('No entries found in storage.');
       }
     });
   });

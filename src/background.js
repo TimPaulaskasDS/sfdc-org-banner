@@ -9,3 +9,42 @@ chrome.runtime.onInstalled.addListener((details) => {
         });
     }
 });
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === "createTabGroup") {
+        createTabGroup(request.tabGroupName, request.url);
+        sendResponse({ status: "success" });
+    }
+    return true; // Indicate that the response will be sent asynchronously
+});
+
+async function createTabGroup(tabGroupName, url) {
+    chrome.tabs.create({ url: url }, async (tab) => {
+        let groupId = await getTabGroupIdByName(tabGroupName);
+        if (groupId === null) {
+            chrome.tabs.group({ tabIds: tab.id }, (newGroupId) => {
+                chrome.tabGroups.update(newGroupId, { title: tabGroupName, color: 'blue' });
+            });
+        } else {
+            chrome.tabs.group({ tabIds: tab.id, groupId: groupId });
+        }
+    });
+}
+
+function getTabGroupIdByName(tabGroupName) {
+    return new Promise((resolve, reject) => {
+        if (!chrome.tabGroups || !chrome.tabGroups.query) {
+            reject(new Error("tabGroups API is not available"));
+            return;
+        }
+        chrome.tabGroups.query({}, (groups) => {
+            for (let group of groups) {
+                if (group.title === tabGroupName) {
+                    resolve(group.id);
+                    return;
+                }
+            }
+            resolve(null);
+        });
+    });
+}
