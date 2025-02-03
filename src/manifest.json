@@ -5,26 +5,6 @@
   "description": "Adds a customizable banner with a label to the top of Salesforce pages, enhancing navigation and organization.",
   "author": "Tim Paulaskas",
   "permissions": ["storage", "tabGroups"],
-  "host_permissions": [
-    "https://*.bluetail.salesforce.com/",
-    "https://*.force.com/",
-    "https://*.forceusercontent.com/",
-    "https://*.force-user-content.com/",
-    "https://*.salesforce.com/",
-    "https://*.salesforceliveagent.com/",
-    "https://*.salesforce-experience.com/",
-    "https://*.salesforce-hub.com/",
-    "https://*.salesforce-scrt.com/",
-    "https://*.salesforce-setup.com/",
-    "https://*.salesforce-sites.com/",
-    "https://*.sfdcopens.com/",
-    "https://*.trailhead.com/",
-    "https://*.documentforce.com/",
-    "https://*.lightning.com/",
-    "https://*.salesforce-communities.com/",
-    "https://*.sfdc.sh/",
-    "https://*.visualforce.com/"
-  ],
   "background": {
     "service_worker": "background.js"
   },
