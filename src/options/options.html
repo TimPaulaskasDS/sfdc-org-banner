@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
-    <link rel="stylesheet" href="options-dark.css" media="(prefers-color-scheme: dark)">
+    <link id="darkThemeStylesheet" rel="stylesheet" href="options-dark.css" media="(prefers-color-scheme: dark)">
 </head>
 
 <body>
@@ -24,8 +24,16 @@
                     </label>
                     Use Tab Groups
                 </button>
-                <button id="importOption" class="menu-item">Import</button>
-                <button id="exportOption" class="menu-item">Export</button>
+                <button id="themeOption" class="menu-item">
+                    <label for="themeSelect">Theme:</label>
+                    <select id="themeSelect">
+                        <option value="system">System</option>
+                        <option value="light">Light</option>
+                        <option value="dark">Dark</option>
+                    </select>
+                    <button id="importOption" class="menu-item">Import</button>
+                    <button id="exportOption" class="menu-item">Export</button>
+                </button>
             </div>
         </h1>
         <div id="banner-placeholder"></div> <!-- Placeholder for the banner -->
@@ -43,6 +51,7 @@
         <button id="addEntryButton" class="button">Add Entry</button>
     </div>
     <script src="options.js"></script>
+    <script src="theme.js"></script>
 </body>
 
 </html>
