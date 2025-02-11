@@ -1,0 +1,97 @@
+body {
+  background-color: #121212;
+  color: #ffffff;
+}
+
+.popup-container {
+  background-color: #1e1e1e;
+  box-shadow: 0 2px 10px rgba(255, 255, 255, 0.1);
+}
+
+h1 {
+  color: #ffffff;
+}
+
+.button {
+  background-color: #007bff;
+}
+
+.button:hover {
+  background-color: #0056b3;
+}
+
+th {
+  background-color: #007bff;
+}
+
+td {
+  background-color: #1e1e1e;
+}
+
+.options-menu {
+  background-color: #1e1e1e;
+  border: 1px solid #333;
+}
+
+.options-menu .menu-item {
+  background-color: #007bff;
+}
+
+.options-menu .menu-item:hover {
+  background-color: #0056b3;
+}
+
+.scroll-button {
+  background-color: #1e1e1e;
+  color: #007bff;
+}
+
+.scroll-button:hover {
+  background-color: #0056b3;
+  color: #ffffff;
+}
+
+.tab button {
+  background-color: #0056b3; /* Inactive tab color */
+  color: #ffffff;
+}
+
+.tab button:hover {
+  background-color: #003f7f;
+  color: #ffffff;
+}
+
+.tab button.active {
+  background-color: #007bff; /* Active tab color */
+  color: #ffffff;
+}
+
+.tab button.active:hover {
+  background-color: #0056b3;
+  color: #ffffff;
+}
+
+input[type='text'],
+input[type='color'] {
+  background-color: #333; /* Default background color */
+  color: #ffffff;
+  border: 1px solid #555;
+}
+
+.tabcontent input[type='text'],
+.tabcontent input[type='color'] {
+  background-color: #1e1e1e; /* Match the tab background color */
+  color: #ffffff;
+  border: 1px solid #555;
+}
+
+.tab button .tab-input {
+  background-color: inherit; /* Match the tab background color */
+  color: inherit;
+  border: none;
+}
+
+input[type='text']:focus,
+input[type='color']:focus {
+  border-color: #007bff;
+}
