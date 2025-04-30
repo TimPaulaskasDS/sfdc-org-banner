@@ -1,3 +1,76 @@
+// Color utilities for handling color validation, conversion, and suggestion
+const ColorUtils = {
+  /**
+   * Checks if a string represents a valid CSS color
+   * @param {string} color - The color string to validate
+   * @returns {boolean} True if the color is valid, false otherwise
+   */
+  isValidColor: (color) => {
+    const s = new Option().style;
+    s.color = color;
+    return s.color !== '';
+  },
+
+  /**
+   * Capitalizes a hex color code if it starts with #
+   * @param {HTMLInputElement} input - Input element containing the color value
+   */
+  capitalizeIfHash: (input) => {
+    if (input.value.startsWith('#')) {
+      input.value = input.value.toUpperCase();
+    }
+  },
+
+  /**
+   * Converts a color string to its hex representation
+   * @param {string} color - The color to convert
+   * @returns {string} The hex representation of the color
+   */
+  convertToHex: (color) => {
+    const ctx = document.createElement('canvas').getContext('2d');
+    ctx.fillStyle = color;
+    return ctx.fillStyle;
+  },
+
+  /**
+   * Suggests a text color (black or white) based on the background color brightness
+   * @param {string} bgColor - The background color in hex format
+   * @returns {string} Either 'Black' or 'White' depending on background brightness
+   */
+  suggestTextColor: (bgColor) => {
+    const color = bgColor.replace('#', '');
+    const r = Number.parseInt(color.substring(0, 2), 16);
+    const g = Number.parseInt(color.substring(2, 4), 16);
+    const b = Number.parseInt(color.substring(4, 6), 16);
+    const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+    return (yiq >= 128) ? 'Black' : 'White';
+  },
+
+  /**
+   * Capitalizes a color value
+   * @param {string} color - The color value to capitalize
+   * @returns {string} The capitalized color value
+   */
+  capitalizeColor: (color) => {
+    return color.toUpperCase();
+  },
+
+  /**
+   * Determines a semi-transparent contrast color for gradient patterns
+   * @param {string} bgColor - The background color
+   * @returns {string} A semi-transparent contrast color for gradients
+   */
+  getContrastColor: (bgColor) => {
+    const hex = bgColor.replace('#', '');
+    const r = Number.parseInt(hex.substring(0, 2), 16);
+    const g = Number.parseInt(hex.substring(2, 4), 16);
+    const b = Number.parseInt(hex.substring(4, 6), 16);
+    const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+    const transparency = 0.1; // Fixed transparency value
+    return (yiq >= 128) ? `rgba(0, 0, 0, ${transparency})` : `rgba(255, 255, 255, ${transparency})`;
+  }
+};
+
 const boldColors = [
   'Crimson', 'DodgerBlue', 'DarkOrange', 'ForestGreen', 'Gold', 'HotPink', 'MediumPurple', 'Tomato', 'Turquoise',
   'DeepPink', 'LimeGreen', 'RoyalBlue', 'OrangeRed', 'MediumVioletRed', 'SpringGreen', 'SteelBlue', 'DarkMagenta',
@@ -18,41 +91,74 @@ const boldColors = [
 const TableManager = {
   tableContainer: document.querySelector('.tabcontent'),
   bannerPlaceholder: document.getElementById('banner-placeholder'),
-  isDuplicateSubdomain: function (subdomain) {
+  isDuplicateSubdomain: (subdomain) => {
     if (!subdomain) {
       return false;
     }
     const entries = document.querySelectorAll('.entry .subdomain');
     let count = 0;
-    entries.forEach(entry => {
+    for (const entry of entries) {
       if (entry.value.trim().toLowerCase() === subdomain.trim().toLowerCase()) {
         count++;
       }
-    });
+    }
     return count > 1;
   },
   saveEntries: function () {
-    // Clear existing entries
+    /**
+     * Collects entries from the UI, validates them, and saves to storage
+     * Entries are sorted by their tab order before saving
+     */
     const entries = [];
-    const tabOrder = TabManager.getTabOrder(); // Assuming this method returns the tabs in the correct order
-
-    document.querySelectorAll('.entry').forEach(entry => {
-      const tableId = entry.closest('table').id;
-      const guid = tableId.replace('entries-table-', '');
-      const tabName = TabManager.getTabNameByGUID(guid);
-      const label = entry.querySelector('.label').value;
-      const subdomain = entry.querySelector('.subdomain').value;
-      const bgColor = entry.querySelector('.bg-color-text').value;
-      const textColor = entry.querySelector('.text-color-text').value;
-      if (subdomain && bgColor && textColor && !this.isDuplicateSubdomain(subdomain)) {
-        entries.push({ label, subdomain, bgColor, textColor, tabname: tabName });
+    const tabOrder = TabManager.getTabOrder();
+    
+    // Collect all valid entries from the DOM
+    const entryElements = document.querySelectorAll('.entry');
+    for (const entryElement of entryElements) {
+      const entry = this.extractEntryData(entryElement);
+      
+      // Only save entries that have all required fields and no duplicates
+      if (this.isValidEntry(entry)) {
+        entries.push(entry);
       }
-    });
+    }
 
     // Sort entries based on tab order
     entries.sort((a, b) => tabOrder.indexOf(a.tabname) - tabOrder.indexOf(b.tabname));
-    chrome.storage.local.set({ entries }, () => {
-    });
+    
+    // Save to Chrome storage
+    chrome.storage.local.set({ entries });
+  },
+  
+  /**
+   * Extracts entry data from a DOM element
+   * @param {HTMLElement} entryElement - The DOM element containing entry data
+   * @returns {Object} The extracted entry data
+   */
+  extractEntryData: (entryElement) => {
+    const tableId = entryElement.closest('table').id;
+    const guid = tableId.replace('entries-table-', '');
+    const tabName = TabManager.getTabNameByGUID(guid);
+    
+    return {
+      label: entryElement.querySelector('.label').value,
+      subdomain: entryElement.querySelector('.subdomain').value,
+      bgColor: entryElement.querySelector('.bg-color-text').value,
+      textColor: entryElement.querySelector('.text-color-text').value,
+      tabname: tabName
+    };
+  },
+  
+  /**
+   * Validates if an entry has all required fields and no duplicate subdomain
+   * @param {Object} entry - The entry to validate
+   * @returns {boolean} True if entry is valid, false otherwise
+   */
+  isValidEntry: function(entry) {
+    return entry.subdomain && 
+           entry.bgColor && 
+           entry.textColor && 
+           !this.isDuplicateSubdomain(entry.subdomain);
   },
 
   getTabGUIDByName(tabName) {
@@ -66,9 +172,9 @@ const TableManager = {
   addNewTable(guid) {
     // Hide all existing tables
     const existingTables = document.querySelectorAll('table[id^="entries-table-"]');
-    existingTables.forEach(table => {
+    for (const table of existingTables) {
       table.style.display = 'none';
-    });
+    }
 
     if (!this.tableExists(guid)) {
       const newTable = document.createElement('div');
@@ -117,7 +223,7 @@ const TableManager = {
         return;
       }
 
-      if (e.target && e.target.classList.contains('entry') && !isDraggingFromInput) {
+      if (e.target?.classList.contains('entry') && !isDraggingFromInput) {
         draggingRow = e.target;
         draggingRow.classList.add('dragging');
       }
@@ -157,9 +263,8 @@ const TableManager = {
         const offset = y - box.top - box.height / 2;
         if (offset < 0 && offset > closest.offset) {
           return { offset, element: child };
-        } else {
-          return closest;
         }
+        return closest;
       }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
   },
@@ -169,16 +274,16 @@ const TableManager = {
   },
 
   addEntry(guid, entryData = {}) {
-    guid = guid || TabManager.getActiveTab() || TabManager.addNewTab("Default");
-    const tableBody = document.getElementById(`entries-${guid}`);
+    const effectiveGuid = guid || TabManager.getActiveTab() || TabManager.addNewTab("Default");
+    const tableBody = document.getElementById(`entries-${effectiveGuid}`);
     const entry = document.createElement('tr');
     entry.className = 'entry';
     entry.setAttribute('draggable', 'true');
     const usedColors = Array.from(document.querySelectorAll('.entry .bg-color-text')).map(input => input.value);
     const availableColors = boldColors.filter(color => !usedColors.includes(color));
     const bgColor = entryData.bgColor || (availableColors.length > 0 ? availableColors[0] : 'DodgerBlue');
-    const bgColorHex = convertToHex(entryData.bgColor || bgColor);
-    const textColor = suggestTextColor(bgColorHex);
+    const bgColorHex = ColorUtils.convertToHex(entryData.bgColor || bgColor);
+    const textColor = ColorUtils.suggestTextColor(bgColorHex);
 
     entry.innerHTML = `
       <td class="drag-handle"><i class="fas fa-bars"></i><input type="hidden" class="tab" value="${entryData.tab || ''}"></td>
@@ -187,31 +292,24 @@ const TableManager = {
       <td>
         <div class="color-input">
           <input type="text" placeholder="Background Color" class="bg-color-text" value="${bgColor}">
-          <input type="color" class="bg-color-picker" value="${convertToHex(bgColor)}">
+          <input type="color" class="bg-color-picker" value="${ColorUtils.convertToHex(bgColor)}">
         </div>
       </td>
       <td>
         <div class="color-input">
           <input type="text" placeholder="Text Color" class="text-color-text" value="${textColor}">
-          <input type="color" class="text-color-picker" value="${convertToHex(textColor)}">
+          <input type="color" class="text-color-picker" value="${ColorUtils.convertToHex(textColor)}">
         </div>
       </td>
       <td><button class="remove-button"><i class="fas fa-trash-alt"></i></button></td>
     `;
     if (Object.keys(entryData).length === 0) {
-      const unsavedRows = tableBody.querySelectorAll('.entry.unsaved');
-      if (unsavedRows.length > 0) {
-        tableBody.appendChild(entry);
-      } else {
-        tableBody.appendChild(entry);
-      }
+      // Adding a new empty entry
+      entry.classList.add('unsaved');
+      tableBody.appendChild(entry);
     } else {
-      const unsavedRows = tableBody.querySelectorAll('.entry.unsaved');
-      if (unsavedRows.length > 0) {
-        tableBody.insertBefore(entry, unsavedRows[0]);
-      } else {
-        tableBody.appendChild(entry);
-      }
+      // Adding an entry with data
+      tableBody.appendChild(entry);
     }
 
     const bgColorText = entry.querySelector('.bg-color-text');
@@ -222,16 +320,16 @@ const TableManager = {
     const labelInput = entry.querySelector('.label');
 
     bgColorText.addEventListener('input', () => {
-      if (isValidColor(bgColorText.value)) {
-        const hexColor = convertToHex(bgColorText.value);
+      if (ColorUtils.isValidColor(bgColorText.value)) {
+        const hexColor = ColorUtils.convertToHex(bgColorText.value);
         bgColorPicker.value = hexColor;
         if (entry.classList.contains('unsaved')) {
-          textColorText.value = suggestTextColor(hexColor);
+          textColorText.value = ColorUtils.suggestTextColor(hexColor);
           textColorPicker.value = textColorText.value;
         }
       }
-      capitalizeIfHash(bgColorText);
-      if (!isValidColor(bgColorText.value)) {
+      ColorUtils.capitalizeIfHash(bgColorText);
+      if (!ColorUtils.isValidColor(bgColorText.value)) {
         bgColorText.classList.add('invalid');
       } else {
         bgColorText.classList.remove('invalid');
@@ -240,34 +338,38 @@ const TableManager = {
       }
     });
 
-    bgColorPicker.addEventListener('input', function () {
-      const capitalizedColor = capitalizeColor(bgColorPicker.value);
+    bgColorPicker.addEventListener('input', () => {
+      const capitalizedColor = ColorUtils.capitalizeColor(bgColorPicker.value);
       bgColorText.value = capitalizedColor;
+      saveIfComplete();
       updateBanner();
     });
 
     textColorText.addEventListener('input', () => {
-      if (isValidColor(textColorText.value)) {
-        const hexColor = convertToHex(textColorText.value);
+      if (ColorUtils.isValidColor(textColorText.value)) {
+        const hexColor = ColorUtils.convertToHex(textColorText.value);
         textColorPicker.value = hexColor;
       }
-      capitalizeIfHash(textColorText);
-      textColorText.classList.toggle('invalid', !isValidColor(textColorText.value));
-      if (isValidColor(textColorText.value)) {
+      ColorUtils.capitalizeIfHash(textColorText);
+      textColorText.classList.toggle('invalid', !ColorUtils.isValidColor(textColorText.value));
+      if (ColorUtils.isValidColor(textColorText.value)) {
         saveIfComplete();
         updateBanner();
       }
     });
 
-    textColorPicker.addEventListener('input', function () {
-      const capitalizedColor = capitalizeColor(textColorPicker.value);
+    textColorPicker.addEventListener('input', () => {
+      const capitalizedColor = ColorUtils.capitalizeColor(textColorPicker.value);
       textColorText.value = capitalizedColor;
+      saveIfComplete();
       updateBanner();
     });
 
     subdomainInput.addEventListener('input', () => {
       validateSubdomain(entry);
+      saveIfComplete();
     });
+    
     labelInput.addEventListener('input', () => {
       saveIfComplete();
       updateBanner();
@@ -280,11 +382,11 @@ const TableManager = {
     });
 
     // Add focus event listeners to update the banner when an entry is being edited
-    [bgColorText, bgColorPicker, textColorText, textColorPicker, subdomainInput, labelInput].forEach(input => {
+    for (const input of [bgColorText, bgColorPicker, textColorText, textColorPicker, subdomainInput, labelInput]) {
       input.addEventListener('focus', () => {
         updateBanner();
       });
-    });
+    }
 
     // Create and display the banner using the entry values
     updateBanner();
@@ -303,11 +405,11 @@ const TableManager = {
       this.saveEntries();
 
       // Validate subdomains for remaining entries
-      Array.from(entries).forEach((entry, i) => {
-        if (i !== index) {
+      for (const entry of Array.from(entries)) {
+        if (Array.from(entries).indexOf(entry) !== index) {
           validateSubdomain(entry);
         }
-      });
+      }
 
       if (entries.length > 1) {
         if (index < entries.length - 1) {
@@ -325,10 +427,6 @@ const TableManager = {
 
     function updateBanner() {
       createBanner(labelInput.value || 'Label', bgColorText.value || 'red', textColorText.value || 'white');
-    }
-
-    function capitalizeColor(color) {
-      return color.toUpperCase();
     }
 
     function handleSubdomainChange(event) {
@@ -357,9 +455,20 @@ const TableManager = {
     }
 
     function saveIfComplete() {
-      if (subdomainInput.value && bgColorText.value && textColorText.value && labelInput.value && !TableManager.isDuplicateSubdomain(subdomainInput.value)) {
-        TableManager.saveEntries();
-        entry.classList.remove('unsaved');
+      if (subdomainInput.value && bgColorText.value && textColorText.value) {
+        // If label is empty but subdomain has value, auto-populate the label
+        if (!labelInput.value && subdomainInput.value) {
+          const parts = subdomainInput.value.split('--');
+          labelInput.value = parts.length > 1 ? parts[1].toUpperCase() : subdomainInput.value.toUpperCase();
+        }
+        
+        // Now check if we can save
+        if (labelInput.value && !TableManager.isDuplicateSubdomain(subdomainInput.value)) {
+          TableManager.saveEntries();
+          entry.classList.remove('unsaved');
+        } else {
+          entry.classList.add('unsaved');
+        }
       } else {
         entry.classList.add('unsaved');
       }
@@ -367,7 +476,7 @@ const TableManager = {
 
     function validateSubdomain(entry) {
       const subdomainInput = entry.querySelector('.subdomain');
-      let subdomain = subdomainInput.value;
+      const subdomain = subdomainInput.value;
 
       // Check if the subdomain contains a single '-'
       if (subdomain.split('-').length === 2) {
@@ -402,33 +511,6 @@ const TableManager = {
       }
     }
 
-    function isValidColor(color) {
-      const s = new Option().style;
-      s.color = color;
-      return s.color !== '';
-    }
-
-    function capitalizeIfHash(input) {
-      if (input.value.startsWith('#')) {
-        input.value = input.value.toUpperCase();
-      }
-    }
-
-    function convertToHex(color) {
-      const ctx = document.createElement('canvas').getContext('2d');
-      ctx.fillStyle = color;
-      return ctx.fillStyle;
-    }
-
-    function suggestTextColor(bgColor) {
-      const color = bgColor.replace('#', '');
-      const r = parseInt(color.substring(0, 2), 16);
-      const g = parseInt(color.substring(2, 4), 16);
-      const b = parseInt(color.substring(4, 6), 16);
-      const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-      return (yiq >= 128) ? 'Black' : 'White';
-    }
-
     function createBanner(text = 'Label', bgColor = 'gray', textColor = 'white') {
       // Remove any existing banner to avoid duplicates
       const existingBanner = document.querySelector(".oneSystemMessage.banner");
@@ -437,7 +519,7 @@ const TableManager = {
       }
 
       // Determine the gradient color based on the background color
-      const gradientColor = getContrastColor(bgColor);
+      const gradientColor = ColorUtils.getContrastColor(bgColor);
 
       // Create a new banner element
       const banner = document.createElement("div");
@@ -445,20 +527,20 @@ const TableManager = {
 
       // Apply explicit styles to ensure visibility and correct layout
       Object.assign(banner.style, {
-        position: "fixed", // Changed to fixed to ensure visibility
-        top: "0", // Positioned at the top
+        position: "fixed", 
+        top: "0",
         left: "0",
-        display: "block", // Makes it span the full width
-        width: "100%", // Full-width banner
-        padding: "0.5rem 2rem", // Padding for spacing
-        color: textColor, // Text color
-        fontWeight: "bold", // Bold text
-        textAlign: "center", // Center text alignment
-        backgroundColor: bgColor, // Background color
+        display: "block",
+        width: "100%",
+        padding: "0.5rem 2rem",
+        color: textColor,
+        fontWeight: "bold",
+        textAlign: "center",
+        backgroundColor: bgColor,
         backgroundImage: `linear-gradient(45deg, ${gradientColor} 25%, transparent 25%, transparent 50%, ${gradientColor} 50%, ${gradientColor} 75%, transparent 75%, transparent)`,
-        backgroundSize: "64px 64px", // Matches Salesforce's style
-        zIndex: "10000", // High z-index to ensure it’s above other elements
-        boxSizing: "border-box", // Include padding in width calculations
+        backgroundSize: "64px 64px",
+        zIndex: "10000",
+        boxSizing: "border-box",
       });
 
       // Add content to the banner
@@ -469,17 +551,6 @@ const TableManager = {
       if (bannerPlaceholder) {
         bannerPlaceholder.appendChild(banner);
       }
-
-      // Helper function to determine the contrast color
-      function getContrastColor(bgColor) {
-        const hex = bgColor.replace('#', '');
-        const r = parseInt(hex.substring(0, 2), 16);
-        const g = parseInt(hex.substring(2, 4), 16);
-        const b = parseInt(hex.substring(4, 6), 16);
-        const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-        const transparency = 0.1; // Fixed transparency value
-        return (yiq >= 128) ? `rgba(0, 0, 0, ${transparency})` : `rgba(255, 255, 255, ${transparency})`;
-      }
     }
 
   },
@@ -487,10 +558,20 @@ const TableManager = {
 
 const TabManager = {
   tabContainer: document.querySelector('.tab'),
+  
+  /**
+   * Gets the GUID of the currently active tab
+   * @returns {string|null} The GUID of the active tab, or null if no tab is active
+   */
   getActiveTab() {
     const activeTab = this.tabContainer.querySelector('.tablinks.active:not(#newTab)');
     return activeTab ? activeTab.getAttribute('data-guid') : null;
   },
+  
+  /**
+   * Gets the order of tabs based on their position in the DOM
+   * @returns {Array<string>} Array of tab names in order
+   */
   getTabOrder() {
     const tabs = Array.from(this.tabContainer.querySelectorAll('.tablinks:not(#newTab)'));
     return tabs.map(tab => {
@@ -498,6 +579,12 @@ const TabManager = {
       return input ? input.value : null;
     }).filter(name => name !== null);
   },
+  
+  /**
+   * Checks if a tab with the given name exists
+   * @param {string} tabName - The name of the tab to check
+   * @returns {string|null} The GUID of the tab if it exists, otherwise null
+   */
   tabExists(tabName) {
     const tab = Array.from(this.tabContainer.children).find(tab => {
       const input = tab.querySelector('.tab-input');
@@ -505,6 +592,12 @@ const TabManager = {
     });
     return tab ? tab.getAttribute('data-guid') : null;
   },
+  
+  /**
+   * Gets the GUID of a tab by its name
+   * @param {string} tabName - The name of the tab
+   * @returns {string|null} The GUID of the tab if found, otherwise null
+   */
   getTabGUIDByName(tabName) {
     const tab = Array.from(this.tabContainer.querySelectorAll('.tablinks')).find(tab => {
       const input = tab.querySelector('.tab-input');
@@ -512,25 +605,48 @@ const TabManager = {
     });
     return tab ? tab.getAttribute('data-guid') : null;
   },
+  
+  /**
+   * Generates a random GUID for a new tab
+   * @returns {string} A new GUID
+   */
   generateGUID() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-      const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
       return v.toString(16);
     });
   },
+  
+  /**
+   * Gets the name of a tab by its GUID
+   * @param {string} guid - The GUID of the tab
+   * @returns {string|null} The name of the tab if found, otherwise null
+   */
   getTabNameByGUID(guid) {
     const tab = this.tabContainer.querySelector(`.tablinks[data-guid="${guid}"]`);
+    if (!tab) return null;
+    
     const input = tab.querySelector('.tab-input');
     return input ? input.value : null;
   },
 
+  /**
+   * Ensures the plus tab is always at the end of the tab container
+   */
   movePlusTabToEnd() {
     const plusTab = this.tabContainer.querySelector('#newTab');
-    if (plusTab && plusTab.textContent.includes('+')) {
+    if (plusTab?.textContent.includes('+')) {
       this.tabContainer.appendChild(plusTab);
     }
   },
 
+  /**
+   * Determines where to place a tab during drag operations
+   * @param {HTMLElement} container - The container element
+   * @param {number} x - The horizontal position of the cursor
+   * @returns {HTMLElement|null} The element to place the dragged tab after
+   */
   getDragAfterElement(container, x) {
     const draggableElements = [...container.querySelectorAll('.tablinks[draggable="true"]:not(.dragging)')];
 
@@ -539,36 +655,45 @@ const TabManager = {
       const offset = x - box.left - box.width / 2;
       if (offset < 0 && offset > closest.offset) {
         return { offset, element: child };
-      } else {
-        return closest;
       }
+      return closest;
     }, { offset: Number.NEGATIVE_INFINITY }).element;
   },
 
+  /**
+   * Adds drag-and-drop functionality to a tab
+   * @param {HTMLElement} tab - The tab element to add drag-and-drop to
+   */
   addDragAndDrop(tab) {
     let draggingTab = null;
-    let scrollInterval = null;
 
+    // Drag start event - store the dragged tab and add dragging class
     tab.addEventListener('dragstart', (e) => {
       draggingTab = tab;
       tab.classList.add('dragging');
     });
 
+    // Drag end event - cleanup after dragging is done
     tab.addEventListener('dragend', () => {
       draggingTab = null;
       tab.classList.remove('dragging');
-      clearInterval(scrollInterval);
+      clearInterval(this.scrollInterval); // Use this.scrollInterval instead
       TableManager.saveEntries();
     });
 
+    // Handle dragging entries between tabs
     tab.addEventListener('dragover', (e) => {
       const draggingRow = document.querySelector('.entry.dragging');
       if (draggingRow) {
         const tableId = draggingRow.closest('table').id;
         const guid = tableId.replace('entries-table-', '');
         const tabGUID = tab.getAttribute('data-guid');
+        
+        // Only move if dragging to a different tab
         if (tabGUID !== guid) {
           const tableBody = document.getElementById(`entries-${tabGUID}`);
+          
+          // Position before unsaved rows if present
           const unsavedRows = tableBody.querySelectorAll('.entry.unsaved');
           if (unsavedRows.length > 0) {
             tableBody.insertBefore(draggingRow, unsavedRows[0]);
@@ -581,8 +706,11 @@ const TabManager = {
       }
     });
 
+    // Setup container-level drag handling for tab reordering
     this.tabContainer.addEventListener('dragover', (e) => {
       e.preventDefault();
+      
+      // Determine where to place the dragged tab
       const afterElement = this.getDragAfterElement(this.tabContainer, e.clientX);
       if (draggingTab instanceof Node) {
         if (afterElement == null) {
@@ -590,363 +718,533 @@ const TabManager = {
         } else {
           this.tabContainer.insertBefore(draggingTab, afterElement);
         }
-        // Initial check to ensure the `+` tab is at the end
+        // Keep the plus tab at the end
         this.movePlusTabToEnd();
       }
 
       // Auto-scroll when dragging near the edges
-      const containerRect = this.tabContainer.getBoundingClientRect();
-      if (e.clientX < containerRect.left + 50) {
-        clearInterval(scrollInterval);
-        scrollInterval = setInterval(() => {
-          this.tabContainer.scrollBy({ left: -100, behavior: 'smooth' });
-        }, 100);
-      } else if (e.clientX > containerRect.right - 50) {
-        clearInterval(scrollInterval);
-        scrollInterval = setInterval(() => {
-          this.tabContainer.scrollBy({ left: 100, behavior: 'smooth' });
-        }, 100);
-      } else {
-        clearInterval(scrollInterval);
-      }
+      this.handleAutoScroll(e);
     });
 
+    // Clear scroll interval when dragging ends
     this.tabContainer.addEventListener('drop', () => {
       clearInterval(scrollInterval);
     });
   },
+  
+  /**
+   * Handles auto-scrolling during drag operations
+   * @param {DragEvent} e - The drag event
+   */
+  handleAutoScroll(e) {
+    // Store the scroll interval in the TabManager object
+    if (this.scrollInterval) {
+      clearInterval(this.scrollInterval);
+      this.scrollInterval = null;
+    }
+    
+    const containerRect = this.tabContainer.getBoundingClientRect();
+    
+    // Auto-scroll when near left edge
+    if (e.clientX < containerRect.left + 50) {
+      this.scrollInterval = setInterval(() => {
+        this.tabContainer.scrollBy({ left: -100, behavior: 'smooth' });
+      }, 100);
+    } 
+    // Auto-scroll when near right edge
+    else if (e.clientX > containerRect.right - 50) {
+      this.scrollInterval = setInterval(() => {
+        this.tabContainer.scrollBy({ left: 100, behavior: 'smooth' });
+      }, 100);
+    }
+  },
 
+  /**
+   * Adds a new tab to the tab container
+   * @param {string} newTabName - The name of the new tab, defaults to 'New'
+   * @returns {string} The GUID of the new tab
+   */
   addNewTab(newTabName = 'New') {
     const plusTabButton = this.tabContainer.querySelector('#newTab');
     let counter = 1;
+    let uniqueTabName = newTabName;
 
-    // Check for existing tab names and increment the counter until a unique name is found
-    while (Array.from(this.tabContainer.children).some(tab => tab.querySelector('.tab-input') && tab.querySelector('.tab-input').value === newTabName)) {
-      newTabName = `New ${counter}`;
+    // Generate a unique tab name
+    while (Array.from(this.tabContainer.children).some(tab => 
+      tab.querySelector('.tab-input') && tab.querySelector('.tab-input').value === uniqueTabName)) {
+      uniqueTabName = `New ${counter}`;
       counter++;
     }
 
-    // Remove "active" class from the currently active tab
+    // Deactivate current tab
     const currentActiveTab = document.querySelector('.tablinks.active');
     if (currentActiveTab) {
       currentActiveTab.classList.remove('active');
     }
 
-    // Generate a GUID for the new tab
+    // Create new tab with unique GUID
     const tabGUID = this.generateGUID();
+    const newTabButton = this.createTabElement(uniqueTabName, tabGUID);
 
-    // Create the new tab button
-    const newTabButton = document.createElement('button');
-    newTabButton.textContent = newTabName;
-    newTabButton.className = 'tablinks active'; // Add both 'tablinks' and 'active' classes
-    newTabButton.setAttribute('draggable', 'true');
-    newTabButton.setAttribute('data-guid', tabGUID); // Set the GUID as a data attribute
-    newTabButton.innerHTML = `<i class="fas fa-grip-lines-vertical"></i> <input type="text" class="tab-input" value="${newTabName}">`;
-
-    // Insert the new tab button before the "+" tab button
+    // Insert before plus button and scroll to view
     this.tabContainer.insertBefore(newTabButton, plusTabButton);
-
-    // Scroll to the new tab
     plusTabButton.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
 
-    // Add drag-and-drop functionality to the new tab
+    // Setup drag and drop and create table
     this.addDragAndDrop(newTabButton);
     TableManager.addNewTable(tabGUID);
 
-    // Define tabInputs
-    const tabInput = newTabButton.querySelectorAll('.tab-input');
-
-    // Add input event listeners to tabInputs
-    tabInput.forEach(input => {
-      const tabInputs = document.querySelectorAll('.tab-input');
-
-      input.addEventListener('input', (e) => {
-        const currentValue = e.target.value;
-        setTimeout(() => { }, 0);
-        let isDuplicate = false;
-        tabInputs.forEach(otherInput => {
-          if (otherInput !== e.target && otherInput.value.trim().toLowerCase() === currentValue.trim().toLowerCase()) {
-            isDuplicate = true;
-          }
-        });
-        if (isDuplicate) {
-          e.target.classList.add('invalid');
-          if (!e.target.nextElementSibling || !e.target.nextElementSibling.classList.contains('invalidIcon')) {
-            const invalidIcon = document.createElement('i');
-            invalidIcon.className = 'fas fa-question-circle invalidIcon';
-            e.target.parentNode.appendChild(invalidIcon);
-          }
-        } else {
-          e.target.classList.remove('invalid');
-          const existingIcon = e.target.parentNode.querySelector('.invalidIcon');
-          if (existingIcon) {
-            existingIcon.remove();
-          }
-          TableManager.saveEntries();
+    // Setup input handling for validation
+    this.setupTabInputHandlers(newTabButton);
+    
+    // Setup click handler for tab activation
+    this.setupTabClickHandler(newTabButton);
+    
+    return tabGUID;
+  },
+  
+  /**
+   * Creates a tab DOM element
+   * @param {string} tabName - The name of the tab
+   * @param {string} tabGUID - The GUID for the tab
+   * @returns {HTMLElement} The created tab element
+   */
+  createTabElement(tabName, tabGUID) {
+    const newTabButton = document.createElement('button');
+    newTabButton.className = 'tablinks active';
+    newTabButton.setAttribute('draggable', 'true');
+    newTabButton.setAttribute('data-guid', tabGUID);
+    newTabButton.innerHTML = `
+      <i class="fas fa-grip-lines-vertical"></i>
+      <input type="text" class="tab-input" value="${tabName}">
+    `;
+    return newTabButton;
+  },
+  
+  /**
+   * Sets up input validation handlers for tab name inputs
+   * @param {HTMLElement} tabElement - The tab element to set up handlers for
+   */
+  setupTabInputHandlers(tabElement) {
+    const tabInput = tabElement.querySelector('.tab-input');
+    if (!tabInput) return;
+    
+    // Get all tab inputs for duplicate checking
+    const allTabInputs = document.querySelectorAll('.tab-input');
+    
+    // Input event for validation and storage update
+    tabInput.addEventListener('input', (e) => {
+      const currentValue = e.target.value.trim().toLowerCase();
+      
+      // Check for duplicate tab names
+      let isDuplicate = false;
+      for (const otherInput of allTabInputs) {
+        if (otherInput !== e.target && otherInput.value.trim().toLowerCase() === currentValue) {
+          isDuplicate = true;
+          break;
         }
-      });
-
-      input.addEventListener('keydown', (e) => {
-        if (e.key === ' ') {
-          e.preventDefault(); // Prevent default behavior
-          e.stopPropagation(); // Stop event propagation
-
-          // Add a space to the input value
-          const cursorPosition = input.selectionStart; // Current cursor position
-          const currentValue = input.value;
-          input.value = currentValue.slice(0, cursorPosition) + ' ' + currentValue.slice(cursorPosition);
-
-          // Set the cursor position after the inserted space
-          input.setSelectionRange(cursorPosition + 1, cursorPosition + 1);
-        }
-      });
+      }
+      
+      // Handle validation UI
+      if (isDuplicate) {
+        this.markInputAsInvalid(e.target);
+      } else {
+        this.markInputAsValid(e.target);
+        TableManager.saveEntries();
+      }
     });
+    
+    // Special handling for spaces in tab names
+    tabInput.addEventListener('keydown', (e) => {
+      if (e.key === ' ') {
+        e.preventDefault();
+        e.stopPropagation();
 
-    newTabButton.addEventListener('click', (event) => {
-      // Add event listener to input fields to check for duplicate values
-      const tabInputs = document.querySelectorAll('.tab-input');
-
-      // Remove "active" class from all tabs
+        // Insert space at cursor position
+        const cursorPosition = tabInput.selectionStart;
+        const currentValue = tabInput.value;
+        tabInput.value = `${currentValue.slice(0, cursorPosition)} ${currentValue.slice(cursorPosition)}`;
+        
+        // Move cursor after inserted space
+        tabInput.setSelectionRange(cursorPosition + 1, cursorPosition + 1);
+      }
+    });
+  },
+  
+  /**
+   * Marks an input as invalid with visual indicator
+   * @param {HTMLInputElement} input - The input to mark as invalid
+   */
+  markInputAsInvalid(input) {
+    input.classList.add('invalid');
+    if (!input.nextElementSibling?.classList.contains('invalidIcon')) {
+      const invalidIcon = document.createElement('i');
+      invalidIcon.className = 'fas fa-question-circle invalidIcon';
+      input.parentNode.appendChild(invalidIcon);
+    }
+  },
+  
+  /**
+   * Marks an input as valid, removing any validation indicators
+   * @param {HTMLInputElement} input - The input to mark as valid
+   */
+  markInputAsValid(input) {
+    input.classList.remove('invalid');
+    const existingIcon = input.parentNode.querySelector('.invalidIcon');
+    if (existingIcon) {
+      existingIcon.remove();
+    }
+  },
+  
+  /**
+   * Sets up click handler for tab activation
+   * @param {HTMLElement} tabElement - The tab element to set up handler for
+   */
+  setupTabClickHandler(tabElement) {
+    tabElement.addEventListener('click', (event) => {
+      // Deactivate all tabs
       const allTabs = this.tabContainer.querySelectorAll('.tablinks');
-      allTabs.forEach(tab => tab.classList.remove('active'));
+      for (const tab of allTabs) {
+        tab.classList.remove('active');
+      }
 
-      // Add "active" class to the clicked tab
-      newTabButton.classList.add('active');
-      const tabGUID = newTabButton.getAttribute('data-guid');
+      // Activate clicked tab
+      tabElement.classList.add('active');
+      const tabGUID = tabElement.getAttribute('data-guid');
 
-      // Show the corresponding table and hide others
+      // Show corresponding table and hide others
       const allTables = document.querySelectorAll('table[id^="entries-table-"]');
-      allTables.forEach(table => {
+      for (const table of allTables) {
         const isCurrentTable = table.id === `entries-table-${tabGUID}`;
         table.style.display = isCurrentTable ? 'block' : 'none';
+        
+        // Focus on last row if not clicking in input
         if (isCurrentTable && event.target.tagName.toLowerCase() !== 'input') {
-          // Set focus to the subdomain field of the last row in the table
           const lastRow = table.querySelector('tbody tr:last-child .subdomain');
           if (lastRow) {
             lastRow.focus();
           }
         }
-      });
+      }
     });
-    return tabGUID
   }
 };
 
 
 /**
- * Handles the drag-and-drop functionality for tabs within the tab container.
+ * Main application initialization
+ * Responsible for setting up event handlers and loading data
  */
-document.addEventListener('DOMContentLoaded', function () {
-  // Select the add entry button
-  const addEntryButton = document.getElementById('addEntryButton');
+const AppInitializer = {
+  /**
+   * Initialize the application
+   * Sets up event handlers and loads data from storage
+   */
+  init() {
+    this.setupScrolling();
+    this.setupOptionsMenu();
+    this.setupTabHandlers();
+    this.loadStoredEntries();
+    this.setupAddEntryButton();
+  },
 
-  // Select the tab container and scroll buttons
-  const tabContainer = document.querySelector('.tab');
-  const scrollLeftButton = document.querySelector('.scroll-button.left');
-  const scrollRightButton = document.querySelector('.scroll-button.right');
-
-  // Scroll the tab container to the left
-  scrollLeftButton.addEventListener('click', () => {
-    tabContainer.scrollBy({ left: -150, behavior: 'smooth' });
-  });
-
-  // Scroll the tab container to the right
-  scrollRightButton.addEventListener('click', () => {
-    tabContainer.scrollBy({ left: 150, behavior: 'smooth' });
-  });
-
-  // Scroll the tab container to the left
-  let scrollLeftInterval;
-  scrollLeftButton.addEventListener('mousedown', () => {
-    scrollLeftInterval = setInterval(() => {
-      tabContainer.scrollBy({ left: -100, behavior: 'smooth' });
-    }, 100);
-  });
-  scrollLeftButton.addEventListener('mouseup', () => {
-    clearInterval(scrollLeftInterval);
-  });
-  scrollLeftButton.addEventListener('mouseleave', () => {
-    clearInterval(scrollLeftInterval);
-  });
-
-  // Scroll the tab container to the right
-  let scrollRightInterval;
-  scrollRightButton.addEventListener('mousedown', () => {
-    scrollRightInterval = setInterval(() => {
-      tabContainer.scrollBy({ left: 100, behavior: 'smooth' });
-    }, 100);
-  });
-  scrollRightButton.addEventListener('mouseup', () => {
-    clearInterval(scrollRightInterval);
-  });
-  scrollRightButton.addEventListener('mouseleave', () => {
-    clearInterval(scrollRightInterval);
-  });
-
-  // Add event listener for the "+" tab button
-  const plusTabButton = tabContainer.querySelector('#newTab');
-  plusTabButton.addEventListener('click', () => {
-    TabManager.addNewTab();
-    TableManager.addEntry();
-  });
-
-  // Add drag-and-drop functionality to existing tabs
-  const tabs = tabContainer.querySelectorAll('.tablinks[draggable="true"]');
-  tabs.forEach(tab => TabManager.addDragAndDrop(tab));
-
-  const optionsButton = document.getElementById('optionsButton');
-  const optionsMenu = document.getElementById('optionsMenu');
-  const useTabGroupsToggle = document.getElementById('useTabGroupsToggle');
-  const tabGroupsOption = document.getElementById('tabGroupsOption');
-
-  // Load the current value from Chrome storage and set the toggle state
-  chrome.storage.local.get('useTabGroups', (result) => {
-    useTabGroupsToggle.checked = result.useTabGroups || false;
-  });
-
-  // Update Chrome storage when the toggle is changed
-  useTabGroupsToggle.addEventListener('change', () => {
-    chrome.storage.local.set({ useTabGroups: useTabGroupsToggle.checked });
-  });
-
-  // Toggle the useTabGroupsToggle input value when tabGroupsOption button is clicked
-  tabGroupsOption.addEventListener('click', () => {
-    useTabGroupsToggle.checked = !useTabGroupsToggle.checked;
-    chrome.storage.local.set({ useTabGroups: useTabGroupsToggle.checked });
-  });
-
-  optionsButton.addEventListener('click', () => {
-    optionsMenu.classList.toggle('hidden');
-
-    // Get the position of the optionsButton
-    const buttonRect = optionsButton.getBoundingClientRect();
-
-    // Set the position of the optionsMenu
-    optionsMenu.style.top = `${buttonRect.bottom}px`;
-    optionsMenu.style.left = `${buttonRect.left}px`;
-  });
-
-  document.addEventListener('click', (event) => {
-    if (!optionsButton.contains(event.target) && !optionsMenu.contains(event.target)) {
+  /**
+   * Sets up tab container scrolling functionality
+   */
+  setupScrolling() {
+    const tabContainer = document.querySelector('.tab');
+    const scrollLeftButton = document.querySelector('.scroll-button.left');
+    const scrollRightButton = document.querySelector('.scroll-button.right');
+    
+    // Simple click scroll
+    scrollLeftButton.addEventListener('click', () => {
+      tabContainer.scrollBy({ left: -150, behavior: 'smooth' });
+    });
+    
+    scrollRightButton.addEventListener('click', () => {
+      tabContainer.scrollBy({ left: 150, behavior: 'smooth' });
+    });
+    
+    // Continuous scroll with mousedown
+    let scrollLeftInterval;
+    let scrollRightInterval;
+    
+    scrollLeftButton.addEventListener('mousedown', () => {
+      scrollLeftInterval = setInterval(() => {
+        tabContainer.scrollBy({ left: -100, behavior: 'smooth' });
+      }, 100);
+    });
+    
+    scrollRightButton.addEventListener('mousedown', () => {
+      scrollRightInterval = setInterval(() => {
+        tabContainer.scrollBy({ left: 100, behavior: 'smooth' });
+      }, 100);
+    });
+    
+    // Stop scrolling on mouseup or mouseleave
+    scrollLeftButton.addEventListener('mouseup', () => clearInterval(scrollLeftInterval));
+    scrollLeftButton.addEventListener('mouseleave', () => clearInterval(scrollLeftInterval));
+    scrollRightButton.addEventListener('mouseup', () => clearInterval(scrollRightInterval));
+    scrollRightButton.addEventListener('mouseleave', () => clearInterval(scrollRightInterval));
+  },
+  
+  /**
+   * Sets up the options menu functionality
+   */
+  setupOptionsMenu() {
+    const optionsButton = document.getElementById('optionsButton');
+    const optionsMenu = document.getElementById('optionsMenu');
+    const useTabGroupsToggle = document.getElementById('useTabGroupsToggle');
+    const tabGroupsOption = document.getElementById('tabGroupsOption');
+    
+    // Load stored tab groups preference
+    chrome.storage.local.get('useTabGroups', (result) => {
+      useTabGroupsToggle.checked = result.useTabGroups || false;
+    });
+    
+    // Save tab groups preference when changed
+    useTabGroupsToggle.addEventListener('change', () => {
+      chrome.storage.local.set({ useTabGroups: useTabGroupsToggle.checked });
+    });
+    
+    // Toggle tab groups option
+    tabGroupsOption.addEventListener('click', () => {
+      useTabGroupsToggle.checked = !useTabGroupsToggle.checked;
+      chrome.storage.local.set({ useTabGroups: useTabGroupsToggle.checked });
+    });
+    
+    // Toggle menu visibility
+    optionsButton.addEventListener('click', () => {
+      optionsMenu.classList.toggle('hidden');
+      
+      // Position menu relative to button
+      const buttonRect = optionsButton.getBoundingClientRect();
+      optionsMenu.style.top = `${buttonRect.bottom}px`;
+      optionsMenu.style.left = `${buttonRect.left}px`;
+    });
+    
+    // Close menu when clicking outside
+    document.addEventListener('click', (event) => {
+      if (!optionsButton.contains(event.target) && !optionsMenu.contains(event.target)) {
+        optionsMenu.classList.add('hidden');
+      }
+    });
+    
+    // Setup import/export functionality
+    this.setupImportExport();
+  },
+  
+  /**
+   * Sets up import and export functionality
+   */
+  setupImportExport() {
+    const importOption = document.getElementById('importOption');
+    const exportOption = document.getElementById('exportOption');
+    const optionsMenu = document.getElementById('optionsMenu');
+    
+    // Import entries from JSON file
+    importOption.addEventListener('click', () => {
       optionsMenu.classList.add('hidden');
-    }
-  });
-
-  const importOption = document.getElementById('importOption');
-  const exportOption = document.getElementById('exportOption');
-
-  importOption.addEventListener('click', () => {
-    optionsMenu.classList.add('hidden');
-    // Add your import functionality here
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = 'application/json';
-    fileInput.addEventListener('change', (event) => {
-      const file = event.target.files[0];
-      if (file) {
+      
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = 'application/json';
+      
+      fileInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        
         const reader = new FileReader();
         reader.onload = (e) => {
           try {
-            const entries = JSON.parse(e.target.result);
-            if (Array.isArray(entries)) {
-              const existingEntries = {};
-              document.querySelectorAll('.entry .subdomain').forEach(input => {
-                existingEntries[input.value.trim().toLowerCase()] = input.closest('.entry');
-              });
-
-              entries.forEach(entry => {
-                let invalidEntriesCount = 0;
-
-                if (entry.bgColor && entry.label && entry.subdomain && entry.textColor) {
-                  const subdomainKey = entry.subdomain.trim().toLowerCase();
-                  let tabGUID = TabManager.getTabGUIDByName(entry.tabname || 'Default');
-                  if (!tabGUID) {
-                    tabGUID = TabManager.addNewTab(entry.tabname || 'Default');
-                  }
-
-                  if (existingEntries[subdomainKey]) {
-                    const existingEntry = existingEntries[subdomainKey];
-                    existingEntry.querySelector('.label').value = entry.label;
-                    existingEntry.querySelector('.bg-color-text').value = entry.bgColor;
-                    existingEntry.querySelector('.text-color-text').value = entry.textColor;
-                  } else {
-                    TableManager.addEntry(tabGUID, entry);
-                  }
-                } else {
-                  invalidEntriesCount++;
-                }
-
-                if (invalidEntriesCount > 0) {
-                  alert(`${invalidEntriesCount} entries were in an invalid format and were not imported.`);
-                }
-              });
-              TableManager.saveEntries();
-            } else {
-              alert('Invalid JSON format: Expected an array of entries.');
-            }
+            this.handleImportedData(e.target.result);
           } catch (error) {
-            alert('Error parsing JSON: ' + error.message);
+            alert(`Error parsing JSON: ${error.message}`);
           }
         };
         reader.readAsText(file);
-      }
-    });
-    fileInput.click();
-  });
-
-  exportOption.addEventListener('click', () => {
-    optionsMenu.classList.add('hidden');
-    chrome.storage.local.get('entries', (result) => {
-      if (result.entries) {
-        const json = JSON.stringify(result.entries, null, 2);
-        const blob = new Blob([json], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'salesforce-org-banner.json';
-        a.click();
-        URL.revokeObjectURL(url);
-      }
-    });
-  });
-
-  // Load entries from storage
-  chrome.storage.local.get('entries', (result) => {
-    if (result.entries && result.entries.length > 0) {
-      let previousTabName = null;
-      result.entries.forEach(entryData => {
-        if (!entryData.tabname) {
-          entryData.tabname = "Default";
-        }
-
-        if (previousTabName !== null && previousTabName !== entryData.tabname) {
-          TableManager.addEntry();
-        }
-
-        let tabGUID = TabManager.getTabGUIDByName(entryData.tabname);
-        if (!tabGUID) {
-          tabGUID = TabManager.addNewTab(entryData.tabname);
-        }
-
-        TableManager.addEntry(tabGUID, entryData);
-
-        previousTabName = entryData.tabname;
       });
-      TableManager.addEntry(); // Add a blank entry if no entries are found
-    } else {
-      TableManager.addEntry(); // Add a blank entry if no entries are found
+      
+      fileInput.click();
+    });
+    
+    // Export entries to JSON file
+    exportOption.addEventListener('click', () => {
+      optionsMenu.classList.add('hidden');
+      
+      chrome.storage.local.get('entries', (result) => {
+        if (result.entries) {
+          const json = JSON.stringify(result.entries, null, 2);
+          const blob = new Blob([json], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'salesforce-org-banner.json';
+          a.click();
+          
+          URL.revokeObjectURL(url);
+        }
+      });
+    });
+  },
+  
+  /**
+   * Process imported JSON data
+   * @param {string} jsonData - JSON string containing entries to import
+   */
+  handleImportedData(jsonData) {
+    const entries = JSON.parse(jsonData);
+    
+    if (!Array.isArray(entries)) {
+      alert('Invalid JSON format: Expected an array of entries.');
+      return;
     }
-
-    // Activate the first tab and its corresponding table
+    
+    // Track existing entries to avoid duplicates
+    const existingEntries = {};
+    for (const input of document.querySelectorAll('.entry .subdomain')) {
+      existingEntries[input.value.trim().toLowerCase()] = input.closest('.entry');
+    }
+    
+    let invalidEntriesCount = 0;
+    
+    for (const entry of entries) {
+      if (this.isValidImportEntry(entry)) {
+        const subdomainKey = entry.subdomain.trim().toLowerCase();
+        let tabGUID = TabManager.getTabGUIDByName(entry.tabname || 'Default');
+        
+        if (!tabGUID) {
+          tabGUID = TabManager.addNewTab(entry.tabname || 'Default');
+        }
+        
+        if (existingEntries[subdomainKey]) {
+          this.updateExistingEntry(existingEntries[subdomainKey], entry);
+        } else {
+          TableManager.addEntry(tabGUID, entry);
+        }
+      } else {
+        invalidEntriesCount++;
+      }
+    }
+    
+    if (invalidEntriesCount > 0) {
+      alert(`${invalidEntriesCount} entries were in an invalid format and were not imported.`);
+    }
+    
+    TableManager.saveEntries();
+  },
+  
+  /**
+   * Checks if an imported entry has all required fields
+   * @param {Object} entry - The entry to validate
+   * @returns {boolean} True if entry is valid for import
+   */
+  isValidImportEntry(entry) {
+    return entry.bgColor && entry.label && entry.subdomain && entry.textColor;
+  },
+  
+  /**
+   * Updates an existing entry with imported data
+   * @param {HTMLElement} existingEntryElement - The existing entry element
+   * @param {Object} importedEntry - Data to update with
+   */
+  updateExistingEntry(existingEntryElement, importedEntry) {
+    existingEntryElement.querySelector('.label').value = importedEntry.label;
+    existingEntryElement.querySelector('.bg-color-text').value = importedEntry.bgColor;
+    existingEntryElement.querySelector('.text-color-text').value = importedEntry.textColor;
+  },
+  
+  /**
+   * Sets up tab handling functionality
+   */
+  setupTabHandlers() {
+    const tabContainer = document.querySelector('.tab');
+    const plusTabButton = tabContainer.querySelector('#newTab');
+    
+    // New tab button handler
+    plusTabButton.addEventListener('click', () => {
+      TabManager.addNewTab();
+      TableManager.addEntry();
+    });
+    
+    // Setup drag-and-drop for existing tabs
+    const tabs = tabContainer.querySelectorAll('.tablinks[draggable="true"]');
+    for (const tab of tabs) {
+      TabManager.addDragAndDrop(tab);
+    }
+  },
+  
+  /**
+   * Loads entries from storage
+   */
+  loadStoredEntries() {
+    chrome.storage.local.get('entries', (result) => {
+      if (result.entries && result.entries.length > 0) {
+        this.populateEntriesFromStorage(result.entries);
+      } else {
+        TableManager.addEntry(); // Add a blank entry if no entries are found
+      }
+      
+      // Activate the first tab and its corresponding table
+      this.activateFirstTab();
+    });
+  },
+  
+  /**
+   * Populates entries from storage data
+   * @param {Array} entries - Array of entry objects from storage
+   */
+  populateEntriesFromStorage(entries) {
+    let previousTabName = null;
+    
+    for (const entryData of entries) {
+      if (!entryData.tabname) {
+        entryData.tabname = "Default";
+      }
+      
+      // Create a new empty entry when switching tabs
+      if (previousTabName !== null && previousTabName !== entryData.tabname) {
+        TableManager.addEntry();
+      }
+      
+      let tabGUID = TabManager.getTabGUIDByName(entryData.tabname);
+      if (!tabGUID) {
+        tabGUID = TabManager.addNewTab(entryData.tabname);
+      }
+      
+      TableManager.addEntry(tabGUID, entryData);
+      previousTabName = entryData.tabname;
+    }
+    
+    TableManager.addEntry(); // Add a blank entry for new entries
+  },
+  
+  /**
+   * Activates the first tab in the tab container
+   */
+  activateFirstTab() {
+    const tabContainer = document.querySelector('.tab');
     const firstTab = tabContainer.querySelector('.tablinks:not(#newTab)');
     if (firstTab) {
       firstTab.click();
     }
-  });
-
-  if (addEntryButton) {
-    addEntryButton.addEventListener('click', () => {
-      TableManager.addEntry();
-    });
+  },
+  
+  /**
+   * Sets up the Add Entry button functionality
+   */
+  setupAddEntryButton() {
+    const addEntryButton = document.getElementById('addEntryButton');
+    if (addEntryButton) {
+      addEntryButton.addEventListener('click', () => {
+        TableManager.addEntry();
+      });
+    }
   }
+};
+
+// Initialize the application when the DOM is fully loaded
+document.addEventListener('DOMContentLoaded', () => {
+  AppInitializer.init();
 });
